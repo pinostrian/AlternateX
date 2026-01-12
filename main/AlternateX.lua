@@ -1,0 +1,235 @@
+--==================================================
+-- Alternate X UI Library (STABLE)
+--==================================================
+
+local AX = {}
+
+-- Services
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UIS = game:GetService("UserInputService")
+local Player = Players.LocalPlayer
+
+-- Utility
+local function round(ui, r)
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, r or 10)
+    c.Parent = ui
+end
+
+--==================================================
+-- CREATE WINDOW
+--==================================================
+function AX:CreateWindow(cfg)
+    cfg = cfg or {}
+    local Name = cfg.Name or "Alternate X"
+    local LogoId = cfg.Logo or ""
+    local Keys = cfg.Keys or {}
+
+    -- ScreenGui
+    local Gui = Instance.new("ScreenGui")
+    Gui.Name = "AlternateX_GUI"
+    Gui.IgnoreGuiInset = true
+    Gui.ResetOnSpawn = false
+    Gui.Parent = Player:WaitForChild("PlayerGui")
+
+    ------------------------------------------------
+    -- LOADING SCREEN
+    ------------------------------------------------
+    local Loading = Instance.new("Frame", Gui)
+    Loading.Size = UDim2.fromScale(1,1)
+    Loading.BackgroundColor3 = Color3.fromRGB(10,10,10)
+    Loading.ZIndex = 50
+
+    local Logo = Instance.new("ImageLabel", Loading)
+    Logo.Size = UDim2.new(0,160,0,160)
+    Logo.Position = UDim2.fromScale(0.5,0.45)
+    Logo.AnchorPoint = Vector2.new(0.5,0.5)
+    Logo.Image = LogoId
+    Logo.BackgroundTransparency = 1
+    Logo.ImageTransparency = 1
+
+    local BarBG = Instance.new("Frame", Loading)
+    BarBG.Size = UDim2.new(0,300,0,8)
+    BarBG.Position = UDim2.fromScale(0.5,0.6)
+    BarBG.AnchorPoint = Vector2.new(0.5,0.5)
+    BarBG.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    BarBG.BorderSizePixel = 0
+    round(BarBG,999)
+
+    local Bar = Instance.new("Frame", BarBG)
+    Bar.Size = UDim2.new(0,0,1,0)
+    Bar.BackgroundColor3 = Color3.fromRGB(0,170,255)
+    Bar.BorderSizePixel = 0
+    round(Bar,999)
+
+    TweenService:Create(Logo,TweenInfo.new(0.6),{ImageTransparency=0}):Play()
+    TweenService:Create(Bar,TweenInfo.new(1),{Size=UDim2.new(1,0,1,0)}):Play()
+    task.wait(1.2)
+
+    Loading:Destroy()
+
+    ------------------------------------------------
+    -- KEY SYSTEM
+    ------------------------------------------------
+    local KeyUI = Instance.new("Frame", Gui)
+    KeyUI.Size = UDim2.fromScale(1,1)
+    KeyUI.BackgroundColor3 = Color3.fromRGB(10,10,10)
+
+    local Box = Instance.new("TextBox", KeyUI)
+    Box.Size = UDim2.new(0,300,0,42)
+    Box.Position = UDim2.fromScale(0.5,0.47)
+    Box.AnchorPoint = Vector2.new(0.5,0.5)
+    Box.PlaceholderText = "Enter Key"
+    Box.Font = Enum.Font.Gotham
+    Box.TextSize = 14
+    Box.TextColor3 = Color3.new(1,1,1)
+    Box.BackgroundColor3 = Color3.fromRGB(30,30,30)
+    round(Box)
+
+    local Verify = Instance.new("TextButton", KeyUI)
+    Verify.Size = UDim2.new(0,300,0,40)
+    Verify.Position = UDim2.fromScale(0.5,0.55)
+    Verify.AnchorPoint = Vector2.new(0.5,0.5)
+    Verify.Text = "Verify"
+    Verify.Font = Enum.Font.GothamBold
+    Verify.TextSize = 14
+    Verify.TextColor3 = Color3.new(1,1,1)
+    Verify.BackgroundColor3 = Color3.fromRGB(0,170,255)
+    round(Verify)
+
+    ------------------------------------------------
+    -- MAIN HUB
+    ------------------------------------------------
+    local Hub = Instance.new("Frame", Gui)
+    Hub.Size = UDim2.new(0,620,0,420)
+    Hub.Position = UDim2.fromScale(0.5,0.5)
+    Hub.AnchorPoint = Vector2.new(0.5,0.5)
+    Hub.BackgroundColor3 = Color3.fromRGB(18,18,18)
+    Hub.Visible = false
+    Hub.Active = true
+    round(Hub,14)
+
+    -- Drag
+    local dragging, dragStart, startPos
+    Hub.InputBegan:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = i.Position
+            startPos = Hub.Position
+        end
+    end)
+    UIS.InputEnded:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+    UIS.InputChanged:Connect(function(i)
+        if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
+            local d = i.Position - dragStart
+            Hub.Position = UDim2.new(
+                startPos.X.Scale, startPos.X.Offset + d.X,
+                startPos.Y.Scale, startPos.Y.Offset + d.Y
+            )
+        end
+    end)
+
+    -- Top
+    local Top = Instance.new("Frame", Hub)
+    Top.Size = UDim2.new(1,0,0,50)
+    Top.BackgroundColor3 = Color3.fromRGB(22,22,22)
+    round(Top,14)
+
+    local Title = Instance.new("TextLabel", Top)
+    Title.Size = UDim2.new(1,-20,1,0)
+    Title.Position = UDim2.new(0,20,0,0)
+    Title.BackgroundTransparency = 1
+    Title.Text = Name
+    Title.Font = Enum.Font.GothamBold
+    Title.TextSize = 17
+    Title.TextColor3 = Color3.new(1,1,1)
+    Title.TextXAlignment = Left
+
+    -- Tabs
+    local Tabs = Instance.new("Frame", Hub)
+    Tabs.Size = UDim2.new(1,0,0,40)
+    Tabs.Position = UDim2.new(0,0,0,50)
+    Tabs.BackgroundColor3 = Color3.fromRGB(20,20,20)
+
+    local TabLayout = Instance.new("UIListLayout", Tabs)
+    TabLayout.FillDirection = Enum.FillDirection.Horizontal
+    TabLayout.Padding = UDim.new(0,8)
+
+    local Pad = Instance.new("UIPadding", Tabs)
+    Pad.PaddingLeft = UDim.new(0,12)
+
+    local Pages = Instance.new("Frame", Hub)
+    Pages.Size = UDim2.new(1,0,1,-90)
+    Pages.Position = UDim2.new(0,0,0,90)
+    Pages.BackgroundTransparency = 1
+
+    local Current
+
+    local Window = {}
+
+    function Window:CreateTab(name)
+        local Btn = Instance.new("TextButton", Tabs)
+        Btn.Size = UDim2.new(0,110,0,28)
+        Btn.Text = name
+        Btn.Font = Enum.Font.Gotham
+        Btn.TextSize = 14
+        Btn.TextColor3 = Color3.fromRGB(220,220,220)
+        Btn.BackgroundColor3 = Color3.fromRGB(32,32,32)
+        round(Btn,999)
+
+        local Page = Instance.new("Frame", Pages)
+        Page.Size = UDim2.fromScale(1,1)
+        Page.Visible = false
+        Page.BackgroundTransparency = 1
+
+        Btn.MouseButton1Click:Connect(function()
+            if Current then Current.Visible = false end
+            Page.Visible = true
+            Current = Page
+        end)
+
+        if not Current then
+            Page.Visible = true
+            Current = Page
+        end
+
+        local y = 20
+        local Tab = {}
+
+        function Tab:AddButton(text, callback)
+            local B = Instance.new("TextButton", Page)
+            B.Size = UDim2.new(0,240,0,40)
+            B.Position = UDim2.new(0,20,0,y)
+            B.Text = text
+            B.Font = Enum.Font.Gotham
+            B.TextSize = 14
+            B.TextColor3 = Color3.new(1,1,1)
+            B.BackgroundColor3 = Color3.fromRGB(35,35,35)
+            round(B)
+            B.MouseButton1Click:Connect(callback)
+            y += 50
+        end
+
+        return Tab
+    end
+
+    Verify.MouseButton1Click:Connect(function()
+        for _,k in ipairs(Keys) do
+            if Box.Text == k then
+                KeyUI:Destroy()
+                Hub.Visible = true
+                return
+            end
+        end
+        Box.Text = "Invalid Key"
+    end)
+
+    return Window
+end
+
+return AX
