@@ -1,10 +1,10 @@
 --==================================================
--- 𝚊𝚕𝚝𝚎𝚛𝙽𝚊𝚝𝚎-𝚇
--- 𝚜𝚙𝚎𝚌𝚒𝚊𝚕𝚒𝚣𝚎𝚍 𝚑𝚞𝚋
+-- Alternate X UI Library
+-- Premium | Clean | Stylisg-Inspired
 --==================================================
 
-local AlternateX = {}
-AlternateX.__index = AlternateX
+local AX = {}
+AX.__index = AX
 
 -- Services
 local Players = game:GetService("Players")
@@ -12,200 +12,265 @@ local TweenService = game:GetService("TweenService")
 local UIS = game:GetService("UserInputService")
 local Player = Players.LocalPlayer
 
---==================================================
--- Utility
---==================================================
-
-local function Create(class, props)
-    local obj = Instance.new(class)
-    for k, v in pairs(props or {}) do
-        obj[k] = v
-    end
-    return obj
-end
-
-local function Round(ui, radius)
+--------------------------------------------------
+-- Utilities
+--------------------------------------------------
+local function round(obj, r)
     local c = Instance.new("UICorner")
-    c.CornerRadius = UDim.new(0, radius)
-    c.Parent = ui
+    c.CornerRadius = UDim.new(0, r)
+    c.Parent = obj
 end
 
---==================================================
--- Loading Screen
---==================================================
-
-local function ShowLoading(title, subtitle)
-    local gui = Create("ScreenGui", {Parent = Player.PlayerGui, ResetOnSpawn = false})
-    local frame = Create("Frame", {
-        Parent = gui,
-        Size = UDim2.fromScale(1,1),
-        BackgroundColor3 = Color3.fromRGB(10,10,10)
-    })
-
-    local titleLabel = Create("TextLabel", {
-        Parent = frame,
-        Size = UDim2.fromScale(1,0.1),
-        Position = UDim2.fromScale(0,0.45),
-        Text = title,
-        TextColor3 = Color3.new(1,1,1),
-        Font = Enum.Font.GothamBold,
-        TextScaled = true,
-        BackgroundTransparency = 1
-    })
-
-    local subLabel = Create("TextLabel", {
-        Parent = frame,
-        Size = UDim2.fromScale(1,0.05),
-        Position = UDim2.fromScale(0,0.53),
-        Text = subtitle,
-        TextColor3 = Color3.fromRGB(180,180,180),
-        Font = Enum.Font.Gotham,
-        TextScaled = true,
-        BackgroundTransparency = 1
-    })
-
-    task.wait(1.5)
-    gui:Destroy()
+local function tween(obj, props, t)
+    TweenService:Create(obj, TweenInfo.new(t or 0.25, Enum.EasingStyle.Quint), props):Play()
 end
 
---==================================================
--- Key System
---==================================================
+--------------------------------------------------
+-- Window
+--------------------------------------------------
+function AX:CreateWindow(cfg)
+    cfg = cfg or {}
 
-local function RunKeySystem(settings)
-    if not settings then return true end
+    local Window = {}
+    setmetatable(Window, AX)
 
-    local accepted = false
+    local gui = Instance.new("ScreenGui", game.CoreGui)
+    gui.Name = "AlternateX"
+    gui.ResetOnSpawn = false
 
-    local gui = Create("ScreenGui", {Parent = Player.PlayerGui, ResetOnSpawn = false})
-    local frame = Create("Frame", {
-        Parent = gui,
-        Size = UDim2.fromScale(0.3,0.3),
-        Position = UDim2.fromScale(0.35,0.35),
-        BackgroundColor3 = Color3.fromRGB(20,20,20)
-    })
-    Round(frame, 12)
+    --------------------------------------------------
+    -- Loading Screen
+    --------------------------------------------------
+    if cfg.Loading then
+        local Load = Instance.new("Frame", gui)
+        Load.Size = UDim2.fromScale(1,1)
+        Load.BackgroundColor3 = Color3.fromRGB(10,10,12)
 
-    local box = Create("TextBox", {
-        Parent = frame,
-        Size = UDim2.fromScale(0.9,0.2),
-        Position = UDim2.fromScale(0.05,0.4),
-        PlaceholderText = "Enter Key",
-        Text = "",
-        Font = Enum.Font.Gotham,
-        TextColor3 = Color3.new(1,1,1),
-        BackgroundColor3 = Color3.fromRGB(30,30,30)
-    })
-    Round(box, 8)
+        local Title = Instance.new("TextLabel", Load)
+        Title.Text = cfg.Loading.Title or "Loading..."
+        Title.Font = Enum.Font.GothamBold
+        Title.TextSize = 30
+        Title.TextColor3 = Color3.new(1,1,1)
+        Title.BackgroundTransparency = 1
+        Title.AnchorPoint = Vector2.new(.5,.5)
+        Title.Position = UDim2.fromScale(.5,.45)
 
-    local verify = Create("TextButton", {
-        Parent = frame,
-        Size = UDim2.fromScale(0.4,0.18),
-        Position = UDim2.fromScale(0.05,0.7),
-        Text = "Verify",
-        Font = Enum.Font.GothamBold,
-        TextColor3 = Color3.new(1,1,1),
-        BackgroundColor3 = Color3.fromRGB(50,120,255)
-    })
-    Round(verify, 8)
+        local Sub = Instance.new("TextLabel", Load)
+        Sub.Text = cfg.Loading.Subtitle or ""
+        Sub.Font = Enum.Font.Gotham
+        Sub.TextSize = 14
+        Sub.TextColor3 = Color3.fromRGB(170,170,170)
+        Sub.BackgroundTransparency = 1
+        Sub.AnchorPoint = Vector2.new(.5,.5)
+        Sub.Position = UDim2.fromScale(.5,.53)
 
-    verify.MouseButton1Click:Connect(function()
-        if box.Text ~= "" then
-            accepted = true
-            gui:Destroy()
+        task.wait(cfg.Loading.Time or 2)
+        tween(Load, {BackgroundTransparency = 1}, .4)
+        task.wait(.4)
+        Load:Destroy()
+    end
+
+    --------------------------------------------------
+    -- Key System
+    --------------------------------------------------
+    if cfg.KeySystem and cfg.KeySystem.Enabled then
+        local KeyUI = Instance.new("Frame", gui)
+        KeyUI.Size = UDim2.fromScale(1,1)
+        KeyUI.BackgroundColor3 = Color3.fromRGB(10,10,12)
+
+        local Box = Instance.new("Frame", KeyUI)
+        Box.Size = UDim2.fromOffset(320,190)
+        Box.AnchorPoint = Vector2.new(.5,.5)
+        Box.Position = UDim2.fromScale(.5,.5)
+        Box.BackgroundColor3 = Color3.fromRGB(18,18,22)
+        round(Box,16)
+
+        local Input = Instance.new("TextBox", Box)
+        Input.PlaceholderText = "Enter Key"
+        Input.Size = UDim2.fromOffset(260,42)
+        Input.Position = UDim2.fromOffset(30,70)
+        Input.BackgroundColor3 = Color3.fromRGB(30,30,35)
+        Input.TextColor3 = Color3.new(1,1,1)
+        Input.Font = Enum.Font.Gotham
+        Input.TextSize = 14
+        round(Input,10)
+
+        local Verify = Instance.new("TextButton", Box)
+        Verify.Text = "Verify"
+        Verify.Size = UDim2.fromOffset(260,38)
+        Verify.Position = UDim2.fromOffset(30,125)
+        Verify.BackgroundColor3 = Color3.fromRGB(90,90,255)
+        Verify.TextColor3 = Color3.new(1,1,1)
+        Verify.Font = Enum.Font.GothamBold
+        Verify.TextSize = 14
+        round(Verify,10)
+
+        Verify.MouseButton1Click:Connect(function()
+            if Input.Text == cfg.KeySystem.Key then
+                KeyUI:Destroy()
+            else
+                Verify.Text = "Invalid Key"
+                task.wait(1)
+                Verify.Text = "Verify"
+            end
+        end)
+
+        repeat task.wait() until not KeyUI.Parent
+    end
+
+    --------------------------------------------------
+    -- Main UI
+    --------------------------------------------------
+    local Main = Instance.new("Frame", gui)
+    Main.Size = UDim2.fromOffset(540,360)
+    Main.AnchorPoint = Vector2.new(.5,.5)
+    Main.Position = UDim2.fromScale(.5,.5)
+    Main.BackgroundColor3 = Color3.fromRGB(16,16,20)
+    round(Main,18)
+
+    -- Drag
+    local drag, startPos, start
+    Main.InputBegan:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1 then
+            drag = true
+            start = i.Position
+            startPos = Main.Position
+        end
+    end)
+    UIS.InputChanged:Connect(function(i)
+        if drag and i.UserInputType == Enum.UserInputType.MouseMovement then
+            local d = i.Position - start
+            Main.Position = startPos + UDim2.fromOffset(d.X, d.Y)
+        end
+    end)
+    UIS.InputEnded:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1 then
+            drag = false
         end
     end)
 
-    repeat task.wait() until accepted
-    return true
-end
+    --------------------------------------------------
+    -- Floating Icon
+    --------------------------------------------------
+    if cfg.FloatingIcon and cfg.FloatingIcon.Enabled then
+        local Icon = Instance.new("ImageButton", gui)
+        Icon.Size = UDim2.fromOffset(cfg.FloatingIcon.Size or 50, cfg.FloatingIcon.Size or 50)
+        Icon.Position = cfg.FloatingIcon.Position or UDim2.fromScale(0.05,0.5)
+        Icon.Image = cfg.FloatingIcon.Image or "rbxassetid://124558441880674"
+        Icon.BackgroundColor3 = Color3.fromRGB(22,22,26)
+        Icon.AutoButtonColor = false
+        round(Icon,14)
 
---==================================================
--- Window
---==================================================
+        local open = true
+        Icon.MouseButton1Click:Connect(function()
+            open = not open
+            Main.Visible = open
+        end)
 
-function AlternateX:CreateWindow(config)
-    ShowLoading(config.LoadingTitle or "Alternate X", config.LoadingSubtitle or "Loading")
-
-    if config.KeySystem then
-        RunKeySystem(config.KeySettings)
+        -- Drag icon
+        local idrag, istart, ipos
+        Icon.InputBegan:Connect(function(i)
+            if i.UserInputType == Enum.UserInputType.MouseButton1 then
+                idrag = true
+                istart = i.Position
+                ipos = Icon.Position
+            end
+        end)
+        UIS.InputChanged:Connect(function(i)
+            if idrag and i.UserInputType == Enum.UserInputType.MouseMovement then
+                local d = i.Position - istart
+                Icon.Position = ipos + UDim2.fromOffset(d.X, d.Y)
+            end
+        end)
+        UIS.InputEnded:Connect(function(i)
+            if i.UserInputType == Enum.UserInputType.MouseButton1 then
+                idrag = false
+            end
+        end)
     end
 
-    local Window = {}
-    Window.Tabs = {}
-
-    local gui = Create("ScreenGui", {Parent = Player.PlayerGui, ResetOnSpawn = false})
-    local main = Create("Frame", {
-        Parent = gui,
-        Size = UDim2.fromScale(0.45,0.55),
-        Position = UDim2.fromScale(0.275,0.225),
-        BackgroundColor3 = Color3.fromRGB(18,18,18)
-    })
-    Round(main, 14)
-
-    local tabHolder = Create("Frame", {
-        Parent = main,
-        Size = UDim2.fromScale(0.25,1),
-        BackgroundColor3 = Color3.fromRGB(22,22,22)
-    })
-
-    local contentHolder = Create("Frame", {
-        Parent = main,
-        Position = UDim2.fromScale(0.25,0),
-        Size = UDim2.fromScale(0.75,1),
-        BackgroundTransparency = 1
-    })
-
-    --==================================================
+    --------------------------------------------------
     -- Tabs
-    --==================================================
+    --------------------------------------------------
+    local Tabs = Instance.new("Frame", Main)
+    Tabs.Size = UDim2.fromOffset(140,320)
+    Tabs.Position = UDim2.fromOffset(10,20)
+    Tabs.BackgroundTransparency = 1
+
+    local Pages = Instance.new("Frame", Main)
+    Pages.Size = UDim2.fromOffset(360,320)
+    Pages.Position = UDim2.fromOffset(170,20)
+    Pages.BackgroundTransparency = 1
+
+    local TList = Instance.new("UIListLayout", Tabs)
+    TList.Padding = UDim.new(0,8)
 
     function Window:CreateTab(name)
         local Tab = {}
 
-        local button = Create("TextButton", {
-            Parent = tabHolder,
-            Size = UDim2.fromScale(1,0.08),
-            Text = name,
-            Font = Enum.Font.Gotham,
-            TextColor3 = Color3.new(1,1,1),
-            BackgroundTransparency = 1
-        })
+        local Btn = Instance.new("TextButton", Tabs)
+        Btn.Text = name
+        Btn.Size = UDim2.fromOffset(130,38)
+        Btn.BackgroundColor3 = Color3.fromRGB(26,26,32)
+        Btn.TextColor3 = Color3.fromRGB(220,220,220)
+        Btn.Font = Enum.Font.Gotham
+        Btn.TextSize = 14
+        round(Btn,10)
 
-        local page = Create("Frame", {
-            Parent = contentHolder,
-            Size = UDim2.fromScale(1,1),
-            Visible = false,
-            BackgroundTransparency = 1
-        })
+        local Page = Instance.new("ScrollingFrame", Pages)
+        Page.Size = UDim2.fromScale(1,1)
+        Page.ScrollBarImageTransparency = 1
+        Page.CanvasSize = UDim2.new(0,0,0,0)
+        Page.Visible = false
 
-        button.MouseButton1Click:Connect(function()
-            for _, t in pairs(Window.Tabs) do
-                t.Page.Visible = false
+        local PList = Instance.new("UIListLayout", Page)
+        PList.Padding = UDim.new(0,10)
+
+        Btn.MouseButton1Click:Connect(function()
+            for _,v in ipairs(Pages:GetChildren()) do
+                if v:IsA("ScrollingFrame") then v.Visible = false end
             end
-            page.Visible = true
+            Page.Visible = true
         end)
 
-        function Tab:AddButton(info)
-            local btn = Create("TextButton", {
-                Parent = page,
-                Size = UDim2.fromScale(0.9,0.1),
-                Position = UDim2.fromScale(0.05,0.05),
-                Text = info.Name,
-                Font = Enum.Font.Gotham,
-                TextColor3 = Color3.new(1,1,1),
-                BackgroundColor3 = Color3.fromRGB(35,35,35)
-            })
-            Round(btn, 8)
+        function Tab:AddButton(text, cb)
+            local B = Instance.new("TextButton", Page)
+            B.Text = text
+            B.Size = UDim2.fromOffset(340,42)
+            B.BackgroundColor3 = Color3.fromRGB(32,32,38)
+            B.TextColor3 = Color3.new(1,1,1)
+            B.Font = Enum.Font.GothamBold
+            B.TextSize = 14
+            round(B,10)
 
-            btn.MouseButton1Click:Connect(info.Callback)
+            B.MouseButton1Click:Connect(function()
+                tween(B, {BackgroundColor3 = Color3.fromRGB(90,90,255)}, .15)
+                task.wait(.15)
+                tween(B, {BackgroundColor3 = Color3.fromRGB(32,32,38)}, .15)
+                cb()
+            end)
         end
 
-        Tab.Page = page
-        table.insert(Window.Tabs, Tab)
+        function Tab:AddToggle(text, default, cb)
+            local state = default
+            local T = Instance.new("TextButton", Page)
+            T.Text = text
+            T.Size = UDim2.fromOffset(340,42)
+            T.BackgroundColor3 = state and Color3.fromRGB(90,90,255) or Color3.fromRGB(32,32,38)
+            T.TextColor3 = Color3.new(1,1,1)
+            T.Font = Enum.Font.Gotham
+            T.TextSize = 14
+            round(T,10)
 
-        if #Window.Tabs == 1 then
-            page.Visible = true
+            cb(state)
+
+            T.MouseButton1Click:Connect(function()
+                state = not state
+                tween(T, {
+                    BackgroundColor3 = state and Color3.fromRGB(90,90,255) or Color3.fromRGB(32,32,38)
+                })
+                cb(state)
+            end)
         end
 
         return Tab
@@ -214,8 +279,4 @@ function AlternateX:CreateWindow(config)
     return Window
 end
 
---==================================================
--- Return
---==================================================
-
-return setmetatable({}, AlternateX)
+return AX
