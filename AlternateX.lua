@@ -1,183 +1,221 @@
 --==================================================
--- Alternate X UI Library
--- 𝙰𝚕𝚝𝚎𝚛𝚗𝚊𝚝𝚎 𝚇 𝚂𝚙𝚎𝚌𝚒𝚊𝚕𝚒𝚣𝚎𝚍 𝚑𝚞𝚋
+-- 𝚊𝚕𝚝𝚎𝚛𝙽𝚊𝚝𝚎-𝚇
+-- 𝚜𝚙𝚎𝚌𝚒𝚊𝚕𝚒𝚣𝚎𝚍 𝚑𝚞𝚋
 --==================================================
 
 local AlternateX = {}
+AlternateX.__index = AlternateX
+
+-- Services
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UIS = game:GetService("UserInputService")
 local Player = Players.LocalPlayer
 
 --==================================================
--- Utils
+-- Utility
 --==================================================
-local function round(ui, r)
+
+local function Create(class, props)
+    local obj = Instance.new(class)
+    for k, v in pairs(props or {}) do
+        obj[k] = v
+    end
+    return obj
+end
+
+local function Round(ui, radius)
     local c = Instance.new("UICorner")
-    c.CornerRadius = UDim.new(0, r)
+    c.CornerRadius = UDim.new(0, radius)
     c.Parent = ui
 end
 
-local function tween(o, t, p)
-    TweenService:Create(o, TweenInfo.new(t, Enum.EasingStyle.Quint), p):Play()
-end
+--==================================================
+-- Loading Screen
+--==================================================
 
-local function dragify(f)
-    local d, s, sp
-    f.InputBegan:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then
-            d = true s = i.Position sp = f.Position
-        end
-    end)
-    UIS.InputChanged:Connect(function(i)
-        if d and i.UserInputType == Enum.UserInputType.MouseMovement then
-            local dx = i.Position - s
-            f.Position = sp + UDim2.fromOffset(dx.X, dx.Y)
-        end
-    end)
-    UIS.InputEnded:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then d = false end
-    end)
+local function ShowLoading(title, subtitle)
+    local gui = Create("ScreenGui", {Parent = Player.PlayerGui, ResetOnSpawn = false})
+    local frame = Create("Frame", {
+        Parent = gui,
+        Size = UDim2.fromScale(1,1),
+        BackgroundColor3 = Color3.fromRGB(10,10,10)
+    })
+
+    local titleLabel = Create("TextLabel", {
+        Parent = frame,
+        Size = UDim2.fromScale(1,0.1),
+        Position = UDim2.fromScale(0,0.45),
+        Text = title,
+        TextColor3 = Color3.new(1,1,1),
+        Font = Enum.Font.GothamBold,
+        TextScaled = true,
+        BackgroundTransparency = 1
+    })
+
+    local subLabel = Create("TextLabel", {
+        Parent = frame,
+        Size = UDim2.fromScale(1,0.05),
+        Position = UDim2.fromScale(0,0.53),
+        Text = subtitle,
+        TextColor3 = Color3.fromRGB(180,180,180),
+        Font = Enum.Font.Gotham,
+        TextScaled = true,
+        BackgroundTransparency = 1
+    })
+
+    task.wait(1.5)
+    gui:Destroy()
 end
 
 --==================================================
--- Create Window
+-- Key System
 --==================================================
-function AlternateX:CreateWindow(cfg)
-    cfg = cfg or {}
-    cfg.Icon = cfg.Icon or {}
-    cfg.KeySystem = cfg.KeySystem or {}
 
-    local Gui = Instance.new("ScreenGui", Player.PlayerGui)
-    Gui.Name = "AlternateX"
-    Gui.ResetOnSpawn = false
+local function RunKeySystem(settings)
+    if not settings then return true end
 
-    ------------------------------------------------
-    -- ICON
-    ------------------------------------------------
-    local IconBtn
-    if cfg.Icon.Enabled then
-        IconBtn = Instance.new("ImageButton", Gui)
-        IconBtn.Size = UDim2.fromOffset(cfg.Icon.Size or 50, cfg.Icon.Size or 50)
-        IconBtn.Position = UDim2.fromScale(0.05, 0.5)
-        IconBtn.Image = cfg.Icon.ImageId
-        IconBtn.BackgroundColor3 = Color3.fromRGB(25,25,25)
-        round(IconBtn, 14)
-        dragify(IconBtn)
+    local accepted = false
+
+    local gui = Create("ScreenGui", {Parent = Player.PlayerGui, ResetOnSpawn = false})
+    local frame = Create("Frame", {
+        Parent = gui,
+        Size = UDim2.fromScale(0.3,0.3),
+        Position = UDim2.fromScale(0.35,0.35),
+        BackgroundColor3 = Color3.fromRGB(20,20,20)
+    })
+    Round(frame, 12)
+
+    local box = Create("TextBox", {
+        Parent = frame,
+        Size = UDim2.fromScale(0.9,0.2),
+        Position = UDim2.fromScale(0.05,0.4),
+        PlaceholderText = "Enter Key",
+        Text = "",
+        Font = Enum.Font.Gotham,
+        TextColor3 = Color3.new(1,1,1),
+        BackgroundColor3 = Color3.fromRGB(30,30,30)
+    })
+    Round(box, 8)
+
+    local verify = Create("TextButton", {
+        Parent = frame,
+        Size = UDim2.fromScale(0.4,0.18),
+        Position = UDim2.fromScale(0.05,0.7),
+        Text = "Verify",
+        Font = Enum.Font.GothamBold,
+        TextColor3 = Color3.new(1,1,1),
+        BackgroundColor3 = Color3.fromRGB(50,120,255)
+    })
+    Round(verify, 8)
+
+    verify.MouseButton1Click:Connect(function()
+        if box.Text ~= "" then
+            accepted = true
+            gui:Destroy()
+        end
+    end)
+
+    repeat task.wait() until accepted
+    return true
+end
+
+--==================================================
+-- Window
+--==================================================
+
+function AlternateX:CreateWindow(config)
+    ShowLoading(config.LoadingTitle or "Alternate X", config.LoadingSubtitle or "Loading")
+
+    if config.KeySystem then
+        RunKeySystem(config.KeySettings)
     end
-
-    ------------------------------------------------
-    -- MAIN WINDOW
-    ------------------------------------------------
-    local Main = Instance.new("Frame", Gui)
-    Main.Size = UDim2.fromOffset(560,360)
-    Main.Position = UDim2.fromScale(.5,.5)
-    Main.AnchorPoint = Vector2.new(.5,.5)
-    Main.BackgroundColor3 = Color3.fromRGB(18,18,18)
-    Main.Visible = false
-    round(Main,16)
-    dragify(Main)
-
-    if IconBtn then
-        IconBtn.MouseButton1Click:Connect(function()
-            Main.Visible = not Main.Visible
-        end)
-    else
-        Main.Visible = true
-    end
-
-    ------------------------------------------------
-    -- KEY SYSTEM
-    ------------------------------------------------
-    local Unlocked = not cfg.KeySystem.Enabled
-
-    if cfg.KeySystem.Enabled then
-        local KeyFrame = Instance.new("Frame", Main)
-        KeyFrame.Size = UDim2.fromScale(1,1)
-        KeyFrame.BackgroundColor3 = Color3.fromRGB(18,18,18)
-        round(KeyFrame,16)
-
-        local Title = Instance.new("TextLabel", KeyFrame)
-        Title.Text = cfg.KeySystem.Title or "Key System"
-        Title.Font = Enum.Font.GothamBold
-        Title.TextSize = 22
-        Title.TextColor3 = Color3.new(1,1,1)
-        Title.BackgroundTransparency = 1
-        Title.Position = UDim2.fromScale(.5,.28)
-        Title.AnchorPoint = Vector2.new(.5,.5)
-        Title.Size = UDim2.fromOffset(320,40)
-
-        local Box = Instance.new("TextBox", KeyFrame)
-        Box.PlaceholderText = "Enter Key"
-        Box.Size = UDim2.fromOffset(260,40)
-        Box.Position = UDim2.fromScale(.5,.42)
-        Box.AnchorPoint = Vector2.new(.5,.5)
-        Box.Font = Enum.Font.Gotham
-        Box.TextSize = 14
-        Box.BackgroundColor3 = Color3.fromRGB(30,30,30)
-        Box.TextColor3 = Color3.new(1,1,1)
-        round(Box,10)
-
-        local Verify = Instance.new("TextButton", KeyFrame)
-        Verify.Text = "Verify Key"
-        Verify.Size = UDim2.fromOffset(260,40)
-        Verify.Position = UDim2.fromScale(.5,.54)
-        Verify.AnchorPoint = Vector2.new(.5,.5)
-        Verify.Font = Enum.Font.GothamBold
-        Verify.TextSize = 14
-        Verify.BackgroundColor3 = Color3.fromRGB(80,120,255)
-        Verify.TextColor3 = Color3.new(1,1,1)
-        round(Verify,10)
-
-        local GetKey = Instance.new("TextButton", KeyFrame)
-        GetKey.Text = "Get Key"
-        GetKey.Size = UDim2.fromOffset(260,36)
-        GetKey.Position = UDim2.fromScale(.5,.65)
-        GetKey.AnchorPoint = Vector2.new(.5,.5)
-        GetKey.Font = Enum.Font.Gotham
-        GetKey.TextSize = 13
-        GetKey.BackgroundColor3 = Color3.fromRGB(40,40,40)
-        GetKey.TextColor3 = Color3.new(1,1,1)
-        round(GetKey,10)
-
-        GetKey.MouseButton1Click:Connect(function()
-            if setclipboard then setclipboard(cfg.KeySystem.GetKeyUrl) end
-        end)
-
-        Verify.MouseButton1Click:Connect(function()
-            if Box.Text == cfg.KeySystem.Key then
-                tween(KeyFrame, .35, {BackgroundTransparency = 1})
-                task.wait(.35)
-                KeyFrame:Destroy()
-                Unlocked = true
-            else
-                tween(Box,.15,{BackgroundColor3=Color3.fromRGB(120,40,40)})
-                task.wait(.15)
-                tween(Box,.15,{BackgroundColor3=Color3.fromRGB(30,30,30)})
-            end
-        end)
-    end
-
-    ------------------------------------------------
-    -- CONTENT API
-    ------------------------------------------------
-    local Pages = Instance.new("Frame", Main)
-    Pages.Size = UDim2.fromScale(1,1)
-    Pages.BackgroundTransparency = 1
 
     local Window = {}
+    Window.Tabs = {}
+
+    local gui = Create("ScreenGui", {Parent = Player.PlayerGui, ResetOnSpawn = false})
+    local main = Create("Frame", {
+        Parent = gui,
+        Size = UDim2.fromScale(0.45,0.55),
+        Position = UDim2.fromScale(0.275,0.225),
+        BackgroundColor3 = Color3.fromRGB(18,18,18)
+    })
+    Round(main, 14)
+
+    local tabHolder = Create("Frame", {
+        Parent = main,
+        Size = UDim2.fromScale(0.25,1),
+        BackgroundColor3 = Color3.fromRGB(22,22,22)
+    })
+
+    local contentHolder = Create("Frame", {
+        Parent = main,
+        Position = UDim2.fromScale(0.25,0),
+        Size = UDim2.fromScale(0.75,1),
+        BackgroundTransparency = 1
+    })
+
+    --==================================================
+    -- Tabs
+    --==================================================
 
     function Window:CreateTab(name)
-        if not Unlocked then return end
         local Tab = {}
-        function Tab:AddButton(text, cb)
-            print("Button:", text)
-            if cb then cb() end
+
+        local button = Create("TextButton", {
+            Parent = tabHolder,
+            Size = UDim2.fromScale(1,0.08),
+            Text = name,
+            Font = Enum.Font.Gotham,
+            TextColor3 = Color3.new(1,1,1),
+            BackgroundTransparency = 1
+        })
+
+        local page = Create("Frame", {
+            Parent = contentHolder,
+            Size = UDim2.fromScale(1,1),
+            Visible = false,
+            BackgroundTransparency = 1
+        })
+
+        button.MouseButton1Click:Connect(function()
+            for _, t in pairs(Window.Tabs) do
+                t.Page.Visible = false
+            end
+            page.Visible = true
+        end)
+
+        function Tab:AddButton(info)
+            local btn = Create("TextButton", {
+                Parent = page,
+                Size = UDim2.fromScale(0.9,0.1),
+                Position = UDim2.fromScale(0.05,0.05),
+                Text = info.Name,
+                Font = Enum.Font.Gotham,
+                TextColor3 = Color3.new(1,1,1),
+                BackgroundColor3 = Color3.fromRGB(35,35,35)
+            })
+            Round(btn, 8)
+
+            btn.MouseButton1Click:Connect(info.Callback)
         end
+
+        Tab.Page = page
+        table.insert(Window.Tabs, Tab)
+
+        if #Window.Tabs == 1 then
+            page.Visible = true
+        end
+
         return Tab
     end
 
     return Window
 end
 
-return AlternateX
+--==================================================
+-- Return
+--==================================================
+
+return setmetatable({}, AlternateX)
